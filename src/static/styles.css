@@ -16,8 +16,9 @@ body {
 }
 
 header {
+  position: relative;
   text-align: center;
-  padding: 20px 0;
+  padding: 62px 16px 20px;
   margin-bottom: 30px;
   background-color: #1a237e;
   color: white;
@@ -26,6 +27,61 @@ header {
 
 header h1 {
   margin-bottom: 10px;
+}
+
+.auth-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: white;
+  color: #1a237e;
+}
+
+.auth-button:hover,
+.secondary-button {
+  background-color: #e8eaf6;
+  color: #1a237e;
+}
+
+#login-dialog {
+  width: min(420px, calc(100% - 32px));
+  margin: auto;
+  padding: 24px;
+  border: 0;
+  border-radius: 5px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+#login-dialog::backdrop {
+  background: rgba(16, 20, 45, 0.55);
+}
+
+#login-dialog h2 {
+  margin-bottom: 20px;
+  color: #1a237e;
+}
+
+#login-dialog input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.secondary-button:hover {
+  background-color: #c5cae9;
 }
 
 main {

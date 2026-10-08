@@ -3,6 +3,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+  const signupContainer = document.getElementById("signup-container");
+  const authButton = document.getElementById("auth-button");
+  const authButtonLabel = document.getElementById("auth-button-label");
+  const loginDialog = document.getElementById("login-dialog");
+  const loginForm = document.getElementById("login-form");
+  const loginError = document.getElementById("login-error");
+  let isTeacher = false;
+
+  async function updateAuthState() {
+    const response = await fetch("/auth/me");
+    const auth = await response.json();
+    isTeacher = auth.authenticated;
+    signupContainer.classList.toggle("hidden", !isTeacher);
+    authButtonLabel.textContent = isTeacher
+      ? `Log out (${auth.username})`
+      : "Teacher login";
+  }
 
   // Function to fetch activities from API
   async function fetchActivities() {
@@ -12,6 +29,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Clear loading message
       activitiesList.innerHTML = "";
+      while (activitySelect.options.length > 1) {
+        activitySelect.remove(1);
+      }
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
@@ -30,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 ${details.participants
                   .map(
                     (email) =>
-                      `<li><span class="participant-email">${email}</span><button class="delete-btn" data-activity="${name}" data-email="${email}">❌</button></li>`
+                      `<li><span class="participant-email">${email}</span>${isTeacher ? `<button class="delete-btn" data-activity="${name}" data-email="${email}" aria-label="Unregister ${email}">Remove</button>` : ""}</li>`
                   )
                   .join("")}
               </ul>
@@ -110,6 +130,59 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  authButton.addEventListener("click", async () => {
+    if (!isTeacher) {
+      loginError.classList.add("hidden");
+      loginDialog.showModal();
+      return;
+    }
+
+    try {
+      await fetch("/auth/logout", { method: "POST" });
+      await updateAuthState();
+      await fetchActivities();
+    } catch (error) {
+      messageDiv.textContent = "Failed to log out. Please try again.";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+    }
+  });
+
+  document.getElementById("cancel-login").addEventListener("click", () => {
+    loginDialog.close();
+  });
+
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    loginError.classList.add("hidden");
+    const formData = new FormData(loginForm);
+
+    try {
+      const response = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.get("username"),
+          password: formData.get("password"),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        loginError.textContent = result.detail || "Login failed";
+        loginError.classList.remove("hidden");
+        return;
+      }
+
+      loginForm.reset();
+      loginDialog.close();
+      await updateAuthState();
+      await fetchActivities();
+    } catch (error) {
+      loginError.textContent = "Failed to log in. Please try again.";
+      loginError.classList.remove("hidden");
+    }
+  });
+
   // Handle form submission
   signupForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -156,5 +229,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Initialize app
-  fetchActivities();
+  updateAuthState().then(fetchActivities).catch(() => fetchActivities());
 });

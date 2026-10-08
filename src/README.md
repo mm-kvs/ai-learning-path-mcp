@@ -5,7 +5,8 @@ A super simple FastAPI application that allows students to view and sign up for 
 ## Features
 
 - View all available extracurricular activities
-- Sign up for activities
+- Teacher-only student registration and unregistration
+- Teacher login with expiring, HTTP-only sessions
 
 ## Getting Started
 
@@ -30,7 +31,34 @@ A super simple FastAPI application that allows students to view and sign up for 
 | Method | Endpoint                                                          | Description                                                         |
 | ------ | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
 | GET    | `/activities`                                                     | Get all activities with their details and current participant count |
-| POST   | `/activities/{activity_name}/signup?email=student@mergington.edu` | Sign up for an activity                                             |
+| POST   | `/auth/login`                                                      | Log in as a teacher                                                  |
+| GET    | `/auth/me`                                                         | Check the current teacher session                                    |
+| POST   | `/auth/logout`                                                     | End the current teacher session                                     |
+| POST   | `/activities/{activity_name}/signup?email=student@mergington.edu` | Register a student (teachers only)                                   |
+| DELETE | `/activities/{activity_name}/unregister?email=student@mergington.edu` | Unregister a student (teachers only)                              |
+
+## Teacher Accounts
+
+Teacher accounts are configured in `teachers.json` next to `app.py`. Passwords are stored as PBKDF2-SHA256 hashes, not as plaintext. Generate a hash with:
+
+```
+python -c 'import getpass, hashlib, secrets; salt = secrets.token_hex(16); password = getpass.getpass("Password: "); digest = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt), 310000).hex(); print(f"pbkdf2_sha256$310000${salt}${digest}")'
+```
+
+Add an entry using the generated value:
+
+```json
+{
+   "teachers": [
+      {
+         "username": "teacher",
+         "password_hash": "pbkdf2_sha256$310000$SALT$HASH"
+      }
+   ]
+}
+```
+
+Use a unique password and keep the credentials file private. Teacher sessions expire after eight hours; student views remain available without logging in.
 
 ## Data Model
 
